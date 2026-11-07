@@ -167,7 +167,36 @@ $('guest').onclick=()=>{guest=true;token=null;me={username:'Ospite'};servers=gue
 async function enterApp(){ $('auth').classList.add('hidden');$('app').classList.remove('hidden');$('sideUser').textContent=me?.role==='owner'?'👑 '+me.username+' · OWNER':me.username;refreshFriends();$('connection').textContent=guest?(me?.role==='owner'?'👑 OWNER · locale':'Modalità ospite'):'Connesso';if(!guest){try{const d=await api('/servers');servers=d.servers;renderServers();}catch(e){$('connection').textContent='Backend non raggiungibile';alert(e.message);}}}
 function renderServers(){$('serverList').innerHTML='';$('serverRail').innerHTML='';if(!servers.length){const empty=document.createElement('div');empty.className='muted';empty.style.cssText='padding:8px;font-size:12px';empty.textContent='Nessun server: premi + per crearne uno.';$('serverList').append(empty)}servers.forEach(s=>{const b=document.createElement('button');b.textContent='◈ '+s.name;b.onclick=()=>selectServer(s);$('serverList').append(b);const dot=document.createElement('button');dot.className='server-dot';dot.textContent=s.name.slice(0,1).toUpperCase();dot.onclick=()=>selectServer(s);$('serverRail').append(dot);});}
 function showModal(title,description,placeholder,confirmText,onConfirm){const back=document.createElement('div');back.className='modal-backdrop';back.innerHTML=`<div class="n-modal"><h2>${title}</h2><p>${description}</p><input id="modalValue" maxlength="48" placeholder="${placeholder}"><div class="modal-actions"><button class="secondary" id="modalCancel">Annulla</button><button class="primary" id="modalConfirm">${confirmText}</button></div></div>`;document.body.append(back);const input=back.querySelector('#modalValue');back.querySelector('#modalCancel').onclick=()=>back.remove();back.querySelector('#modalValue').setAttribute('aria-label',placeholder);back.onclick=e=>{if(e.target===back)back.remove()};back.querySelector('#modalConfirm').onclick=()=>{const value=input.value.trim();if(!value){input.focus();return}back.remove();onConfirm(value)};input.focus();input.onkeydown=e=>{if(e.key==='Enter')back.querySelector('#modalConfirm').click()}}
-async function createServer(){showModal('＋ Crea un server','Dai un nome alla tua community. Potrai aggiungere canali e invitare amici.','Nome del server...','Crea server',async name=>{if(guest){const server={id:'guest-'+Date.now(),name,channels:[{id:'general-'+Date.now(),name:'generale',type:'text'}]};guestServers.push(server);guestPermissions[server.id]={myRole:'owner',roles:{owner:{manageServer:true,manageChannels:true,manageRoles:true,manageMessages:true,sendMessages:true,inviteMembers:true,manageBots:true},admin:{manageServer:true,manageChannels:true,manageRoles:true,manageMessages:true,sendMessages:true,inviteMembers:true,manageBots:true},moderator:{manageServer:false,manageChannels:false,manageRoles:false,manageMessages:true,sendMessages:true,inviteMembers:true,manageBots:false},member:{manageServer:false,manageChannels:false,manageRoles:false,manageMessages:false,sendMessages:true,inviteMembers:false,manageBots:false}}};safeStorage.setItem('nexora_guest_permissions',JSON.stringify(guestPermissions));servers=guestServers;safeStorage.setItem('nexora_guest_servers',JSON.stringify(guestServers));renderServers();selectServer(server);return}try{const d=await api('/servers',{method:'POST',body:JSON.stringify({name})});servers.push(d.server);renderServers();selectServer(d.server)}catch(e){alert(e.message)}})}
+async function createServer(){showModal('＋ Crea un server','Dai un nome alla tua community. Potrai aggiungere canali e invitare amici.','Nome del server...','Crea server',async name=>if(onlineAccount){
+ try{
+  const sb=initSupabase();
+  const {data:server,error}=await sb.from('servers').insert({
+   name,
+   owner_id:me.id,
+   is_official:false
+  }).select().single();
+  if(error)throw error;
+
+  const {error:memberError}=await sb.from('memberships').insert({
+   server_id:server.id,
+   user_id:me.id
+  });
+  if(memberError)throw memberError;
+
+  const {error:channelError}=await sb.from('channels').insert({
+   server_id:server.id,
+   name:'generale'
+  });
+  if(channelError)throw channelError;
+
+  servers.push(server);
+  renderServers();
+  await selectServer(server);
+ }catch(e){
+  alert('Errore creazione server: '+e.message);
+ }
+ return;
+}{if(guest){const server={id:'guest-'+Date.now(),name,channels:[{id:'general-'+Date.now(),name:'generale',type:'text'}]};guestServers.push(server);guestPermissions[server.id]={myRole:'owner',roles:{owner:{manageServer:true,manageChannels:true,manageRoles:true,manageMessages:true,sendMessages:true,inviteMembers:true,manageBots:true},admin:{manageServer:true,manageChannels:true,manageRoles:true,manageMessages:true,sendMessages:true,inviteMembers:true,manageBots:true},moderator:{manageServer:false,manageChannels:false,manageRoles:false,manageMessages:true,sendMessages:true,inviteMembers:true,manageBots:false},member:{manageServer:false,manageChannels:false,manageRoles:false,manageMessages:false,sendMessages:true,inviteMembers:false,manageBots:false}}};safeStorage.setItem('nexora_guest_permissions',JSON.stringify(guestPermissions));servers=guestServers;safeStorage.setItem('nexora_guest_servers',JSON.stringify(guestServers));renderServers();selectServer(server);return}try{const d=await api('/servers',{method:'POST',body:JSON.stringify({name})});servers.push(d.server);renderServers();selectServer(d.server)}catch(e){alert(e.message)}})}
 $('addServer').onclick=$('createFirst').onclick=createServer;
 async function selectServer(s){activeServer=s;$('roomTitle').textContent=s.name;$('channelList').innerHTML='';$('content').innerHTML='';if(onlineAccount){
  try{
