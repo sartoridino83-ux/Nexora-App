@@ -157,7 +157,7 @@ async function finishSupabaseLogin(sb,session,user,preferredName=''){
  const profile={id:user.id,username,email:user.email,updated_at:new Date().toISOString()};
  const {error:profileError}=await sb.from('profiles').upsert(profile,{onConflict:'id'});
  if(profileError)throw Error('Account autenticato, ma manca la tabella profiles in Supabase: '+profileError.message);
- token=null;guest=true;me={id:user.id,username,email:user.email,role:'member'};servers=guestServers;
+ token=null;guest=false;onlineAccount=true;me={id:user.id,username,email:user.email,role:'member'};servers=guestServers;
  safeStorage.setItem('nexora_supabase_session',JSON.stringify({access_token:session.access_token,refresh_token:session.refresh_token,user:{id:user.id,email:user.email}}));
  await enterApp();$('connection').textContent='☁️ Account Supabase · dati server ancora da collegare';$('sideUser').textContent=me.username+' · ACCOUNT';
  $('content').innerHTML='<div class="welcome"><span class="pill">☁️ ACCOUNT SUPABASE</span><h1>Benvenuto, '+escapeHtml(me.username)+'</h1><p class="muted">Accesso completato con Supabase.</p><div class="notice">Il tuo account è online. I server e i messaggi di questa versione sono ancora in modalità locale: il prossimo collegamento porterà anche server, membri e chat su Supabase.</div></div>';
