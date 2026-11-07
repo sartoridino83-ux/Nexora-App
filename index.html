@@ -136,7 +136,7 @@ const safeStorage = (() => {
 })();
 const $=id=>document.getElementById(id);let register=false,token=safeStorage.getItem('nexora_token'),me=null,servers=[],activeServer=null,activeChannel=null,guest=false;let guestProfile=JSON.parse(safeStorage.getItem('nexora_owner_profile')||'null')||{username:'Itz_Gamer',bio:'Proprietario di NEXORA 💜',avatar_url:'/avatar-owner.png',created_at:new Date().toISOString()};let guestServers=JSON.parse(safeStorage.getItem('nexora_guest_servers')||'[]'),guestMessages=JSON.parse(safeStorage.getItem('nexora_guest_messages')||'{}'),guestFriends=JSON.parse(safeStorage.getItem('nexora_guest_friends')||'[]'),activeDM=null,guestBots=JSON.parse(safeStorage.getItem('nexora_guest_bots')||'{}'),guestPermissions=JSON.parse(safeStorage.getItem('nexora_guest_permissions')||'{}');
 async function api(path,opts={}){const r=await fetch('/api'+path,{...opts,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),...(opts.headers||{})}});let data={};try{data=await r.json()}catch{}if(!r.ok)throw Error(data.error||'Errore di connessione');return data}
-let supabaseClient=null;
+let supabaseClient=null,onlineAccount=false;
 function getSupabaseConfig(){return {url:safeStorage.getItem('nexora_sb_url')||'',key:safeStorage.getItem('nexora_sb_key')||''};}
 function initSupabase(){const c=getSupabaseConfig();if(!c.url||!c.key)return null;if(!window.supabase?.createClient)throw Error('Libreria Supabase non caricata. Controlla la connessione internet.');if(!supabaseClient)supabaseClient=window.supabase.createClient(c.url,c.key);return supabaseClient;}
 const sbCfg=getSupabaseConfig();if($('sbUrl'))$('sbUrl').value=sbCfg.url;if($('sbKey'))$('sbKey').value=sbCfg.key;
