@@ -271,7 +271,7 @@ function manageServerPermissions(server){
 function botModerates(server,content){const bot=(guestBots[server.id]||[]).find(b=>b.moderation);if(!bot)return null;const text=content.toLowerCase();if(/(.)\1{9,}/.test(text)||/(https?:\/\/|www\.)/.test(text))return 'Protection Nexora ha messo in revisione il messaggio: possibile spam o link sospetto. Il bot non può stabilire con certezza se un link sia una truffa.';return null;}
 function addLocalMessage(username,content,extra={}){const key=activeServer.id+'_'+activeChannel.id;guestMessages[key]=guestMessages[key]||[];guestMessages[key].push({username,content,created_at:new Date().toISOString(),...extra});safeStorage.setItem('nexora_guest_messages',JSON.stringify(guestMessages));}
 function runBotCommand(raw){
- const bits=raw.trim().split(/\\s+/),cmd=(bits.shift()||'').toLowerCase(),arg=bits.join(' '),bots=guestBots[activeServer?.id]||[];
+ const bits=raw.trim().split(/\s+/),cmd=(bits.shift()||'').toLowerCase(),arg=bits.join(' '),bots=guestBots[activeServer?.id]||[];
  if(!bots.length)return false;
  const bot=bots[0],reply=(text)=>addLocalMessage(bot.name+' ✓ NEX',text,{isBot:true});
  if(cmd==='/help'||cmd==='/comandi'){reply('📚 Comandi disponibili: /help, /ping, /server, /rules, /announce <testo>, /poll <domanda> | <opzione 1> | <opzione 2>, /clear.');}
